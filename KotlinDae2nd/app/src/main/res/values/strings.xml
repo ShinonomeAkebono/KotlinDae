@@ -13,4 +13,5 @@
     <string name="btnSelectByMap">SELECT BY MAP</string>
     <string name="latitude">Latitude</string>
     <string name="longitude">Longitude</string>
+    <string name="title_activity_commander_map">CommanderMapActivity</string>
 </resources>
