@@ -112,6 +112,7 @@ class BluetoothKommunication(deviceName: String,context: Context) {//引数に�
             connectDevice()
         }
     }
+
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(
             nowContext, it) == PackageManager.PERMISSION_GRANTED

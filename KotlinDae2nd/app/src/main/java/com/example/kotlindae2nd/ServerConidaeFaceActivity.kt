@@ -1,35 +1,73 @@
 package com.example.kotlindae2nd
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.example.kotlindae2nd.databinding.ActivityServerConidaeFaceBinding
+import org.json.JSONObject
 
-class ServerConidaeFaceActivity : AppCompatActivity() {
+class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateListener {
 
     private lateinit var binding:ActivityServerConidaeFaceBinding
+    private lateinit var key:BluetoothKommunication
+    private lateinit var conidae:InductionKonidae
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityServerConidaeFaceBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+        key = BluetoothKommunication(intent.getStringExtra("DEVICE_NAME")!!,this)
+        conidae = InductionKonidae(key,this)
+        conidae.statelistener = this
         val faceThread = Thread{
-            for (i in 0..3) {
-                fightFace()
-                Thread.sleep(1000)
-                normalFace()
-                Thread.sleep(1000)
-                troubleFace()
-                Thread.sleep(1000)
-                smileFace()
-                Thread.sleep(1000)
-                nothingFace()
-                Thread.sleep(1000)
-                surpriseFace()
-                Thread.sleep(1000)
+            while (true){
+                Thread.sleep(20000)
+                serverDrive()
             }
         }
         faceThread.start()
+    }
+    fun serverDrive(){
+        val queue=Volley.newRequestQueue(this)
+        var url="https://script.google.com/macros/s/AKfycbzIcRtXuKZvURu9HowEQSTGKcgEMN6Mg_cSIYxiXkXB6frjdV00zXOd5E-yQy4SKDJg/exec?"
+        url += "comm=2&name=${intent.getStringExtra("USERNAME")}&${conidae.getStatusForQuery()}"
+        val stringRequest= StringRequest(
+            Request.Method.GET,url,
+            { response ->println(response)
+                // Display the first 500 characters of the response string.
+                val responseList = response.split("#")
+                val command = responseList[0]
+                val content = responseList[1]
+                if(command.toInt()==2){
+                    val goal = content.split(",")
+                    conidae.drive(goal[0].toDouble(),goal[1].toDouble())
+                }
+                else if(command.toInt()==4){
+                    val json = JSONObject(content)
+                }
+            },
+            {})
+        queue.add(stringRequest)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        conidae.finish()
+    }
+    override fun onStateChanged(state: Int){
+        if(state.and(InductionKonidae.STATE_REVERSE)!=0){
+            nothingFace()
+        }
+        else if(state.and(InductionKonidae.STATE_CONNECTION_ERR)!=0){
+            troubleFace()
+        }
+        else{
+            normalFace()
+        }
     }
     //それぞれの表情について，changeFace()を呼び出す．
     fun fightFace(){
@@ -60,4 +98,5 @@ class ServerConidaeFaceActivity : AppCompatActivity() {
             mMouth.setImageResource(mouth)
         })
     }
+
 }

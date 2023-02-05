@@ -111,7 +111,7 @@ class KShell(context: Context) :SensorEventListener{
     }
 
     fun axel(left:Int,right:Int){//加速用。
-        mRight = - right + 90
+        mRight = right + 90
         mLeft = left + 90
         blue?.sendData("$mLeft,$mRight;")
     }

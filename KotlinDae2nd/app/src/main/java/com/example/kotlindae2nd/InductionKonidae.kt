@@ -123,6 +123,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 it1,goalLat,goalLon,results)
         } }
         distance = results[0]
+        println(results[0])
         goalAzimuth = if(results[1]+magNorth < 180){
             results[1]+magNorth
         }else{
@@ -212,5 +213,8 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         const val STATE_EXECUTING = 512
         const val STATE_ONLINE = 65536
         const val STATE_NET_ERR = 131072
+    }
+    fun getStatusForQuery():String {
+        return "lat=${shell.nowLat.toString()}&long=${shell.nowLon.toString()}&state=$state"
     }
 }
