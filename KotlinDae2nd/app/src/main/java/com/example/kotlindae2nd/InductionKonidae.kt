@@ -208,9 +208,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         const val STATE_CONNECTION_ERR = 4
         const val STATE_STACK = 8
         //サーバー走行の時に使う状態
-        const val STATE_CONIDAE = 65536
-        const val STATE_EXECUTING = 131072
-        const val STATE_ONLINE = 4294967296
-        const val STATE_NET_ERR = 8589934592
+        const val STATE_CONIDAE = 256
+        const val STATE_EXECUTING = 512
+        const val STATE_ONLINE = 65536
+        const val STATE_NET_ERR = 131072
     }
 }
