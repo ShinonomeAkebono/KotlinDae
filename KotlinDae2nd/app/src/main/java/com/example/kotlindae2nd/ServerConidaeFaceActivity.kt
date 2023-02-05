@@ -1,12 +1,8 @@
 package com.example.kotlindae2nd
 
-import android.graphics.drawable.Drawable
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.kotlindae2nd.R
-import com.example.kotlindae2nd.databinding.ActivityMainBinding
+import androidx.appcompat.app.AppCompatActivity
 import com.example.kotlindae2nd.databinding.ActivityServerConidaeFaceBinding
-import java.util.Date
 
 class ServerConidaeFaceActivity : AppCompatActivity() {
 

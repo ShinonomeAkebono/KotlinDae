@@ -23,7 +23,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var distance:Float? = null
     private var magNorth = 0.0
     //状態記録用の変数
-    private var state = STATE_OK
+    private var state = 0
     var statelistener:StateListener? = null
     private lateinit var selfCheckThread: Thread
 
@@ -176,16 +176,20 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         println("チェックするんだえ")
         val lastState = state
         //以下で異常がないかの判定を行うが、else if文で判定しているため、優先度の高い異常から判定するようにすること。
-        state = if(isReverse()){//反転しているとき
-            println("反転しているんだえ")
-            STATE_REVERSE
+        if(isReverse() && state.and(STATE_REVERSE)==0){//反転していて、stateの反転がtrueじゃない時
+            state += STATE_REVERSE
         }
-        else if(!key.isConnectionOK){//Bluetooth接続に問題があるとき
-            STATE_BAD
+        else if(!isReverse()&&state.and(STATE_REVERSE)!=0){//反転していなくて、stateの反転がtrueのとき
+            state -= STATE_REVERSE
         }
-        else{//問題が発生していない時
-            STATE_OK
+
+        if(key.isConnectionOK&&state.and(STATE_CONNECTION_ERR)!=0){//接続に問題が無くて、接続エラーがtrueのとき
+            state -= STATE_CONNECTION_ERR
         }
+        else if(!key.isConnectionOK&&state.and(STATE_CONNECTION_ERR)==0){//接続に問題があり、接続エラー状態でない時
+            state += STATE_CONNECTION_ERR
+        }
+
         if(lastState!=state){//状態が変化していた時
             statelistener?.onStateChanged(state)
         }
@@ -199,8 +203,14 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         return false
     }
     companion object{
-        const val STATE_OK = 100
-        const val STATE_REVERSE = 200
-        const val STATE_BAD = 400
+        //自立走行でも使う状態
+        const val STATE_REVERSE = 2
+        const val STATE_CONNECTION_ERR = 4
+        const val STATE_STACK = 8
+        //サーバー走行の時に使う状態
+        const val STATE_CONIDAE = 65536
+        const val STATE_EXECUTING = 131072
+        const val STATE_ONLINE = 4294967296
+        const val STATE_NET_ERR = 8589934592
     }
 }

@@ -59,14 +59,14 @@ class InductionConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateL
     }
 
     override fun onStateChanged(state: Int){
-        if (state==InductionKonidae.STATE_OK){
-            smileFace()
-        }
-        else if(state==InductionKonidae.STATE_REVERSE){
+        if(state.and(InductionKonidae.STATE_REVERSE)!=0){
             nothingFace()
         }
-        else if(state==InductionKonidae.STATE_BAD){
+        else if(state.and(InductionKonidae.STATE_CONNECTION_ERR)!=0){
             troubleFace()
+        }
+        else{
+            normalFace()
         }
     }
 }
