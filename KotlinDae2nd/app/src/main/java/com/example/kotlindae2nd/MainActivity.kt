@@ -49,6 +49,9 @@ class MainActivity : AppCompatActivity(){
                     }
                     else{
                         Toast.makeText(this, binding.editUserName.text, Toast.LENGTH_SHORT).show()
+                        val operatorModeIntent = Intent(this,CommanderMapActivity::class.java)
+                        operatorModeIntent.putExtra("USERNAME",binding.editUserName.text.toString())
+                        startActivity(operatorModeIntent)
                     }
                 }
             }
