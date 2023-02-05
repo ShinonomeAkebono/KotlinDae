@@ -204,13 +204,13 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     companion object{
         //自立走行でも使う状態
-        const val STATE_REVERSE = 2
+        const val STATE_REVERSE = 8
         const val STATE_CONNECTION_ERR = 4
-        const val STATE_STACK = 10
+        const val STATE_STACK = 2
         //サーバー走行の時に使う状態
-        const val STATE_CONIDAE = 32
-        const val STATE_EXECUTING = 44
-        const val STATE_ONLINE = 55
+        const val STATE_CONIDAE = 256
+        const val STATE_EXECUTING = 512
+        const val STATE_ONLINE = 65536
         const val STATE_NET_ERR = 131072
     }
 }
