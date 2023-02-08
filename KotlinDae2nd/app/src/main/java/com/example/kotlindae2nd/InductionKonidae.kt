@@ -26,6 +26,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     var state = 0
     var statelistener:StateListener? = null
     private lateinit var selfCheckThread: Thread
+    var phi_1 = 0.0
+    var phi_2 = phi_1
+    var mv_1 = 0.0
 
     interface StateListener {//状態が変化したときのイベントリスナー
         fun onStateChanged(state:Int)
@@ -135,11 +138,19 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
+
+        //PIDだえ
+        val mv_D = Kp*(phi-phi_1)+Ki*phi-Kd*((phi-phi_1)-(phi_1-phi_2))
+        val mv = mv_1 + mv_D
+
+
         val preRight = right
         val preLeft = left
         print(phi)
-        right = (0.9*preRight+0.1*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
-        left = (0.9*preLeft+0.1*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
+
+        right = mv.toInt()
+        left = -mv.toInt()
+
         if(right>90){
             right=90
         }else if(right<-90){
@@ -151,6 +162,10 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             left=-90
         }
         println("$right,$left")
+        println("$mv")
+        phi_2 = phi_1
+        phi_1 = phi
+        mv_1 = mv
         return abs(phi).toInt()
     }
     private fun driveLog(str:String){
@@ -214,6 +229,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         //サーバー側でいじる状態
         const val STATE_ONLINE = 65536
         const val STATE_NET_ERR = 131072
+        const val Kp = 0.6
+        const val Ki = 0.6
+        const val Kd = 0.3
     }
     fun getStatusForQuery():String {
         return "lat=${shell.nowLat.toString()}&long=${shell.nowLon.toString()}&state=$state"
