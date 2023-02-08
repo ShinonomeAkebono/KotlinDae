@@ -63,19 +63,6 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                     stop()
                     break
                 }
-                //前進するプログラムはここから
-                calculateToGoal()
-                try {
-                    while (calculate() < 30) {
-                        shell.axel(70, 70)
-                        Thread.sleep(50)
-                    }
-                } catch (e: InterruptedException) {
-                    e.printStackTrace()
-                    driveLog("ドライブ終了だえ")
-                    stop()
-                    break
-                }
             }
             if (distance!! < 10) {
                 driveLog("目的地付近なんだえ")
@@ -149,8 +136,8 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-        right = (-phi/2).toInt()
-        left = (phi/2).toInt()
+        right = (phi/2).toInt()
+        left = (-phi/2).toInt()
         return abs(phi).toInt()
     }
     private fun driveLog(str:String){
