@@ -112,7 +112,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
             ).toTypedArray()
     }
 }
-class MyGestureListener(mapAct:MapsActivity):
+private class MyGestureListener(mapAct:MapsActivity):
     GestureDetector.SimpleOnGestureListener(){
     private var activity = mapAct
     override fun onDoubleTap(e: MotionEvent): Boolean {

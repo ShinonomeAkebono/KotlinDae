@@ -23,7 +23,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var distance:Float? = null
     private var magNorth = 0.0
     //状態記録用の変数
-    private var state = 0
+    var state = 0
     var statelistener:StateListener? = null
     private lateinit var selfCheckThread: Thread
 
@@ -60,7 +60,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 induction()
                 if (breaker) {
                     driveLog("方向転換中に終わるんだえ")
-                    quit()
+                    stop()
                     break
                 }
                 //前進するプログラムはここから
@@ -73,19 +73,19 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 } catch (e: InterruptedException) {
                     e.printStackTrace()
                     driveLog("ドライブ終了だえ")
-                    quit()
+                    stop()
                     break
                 }
             }
             if (distance!! < 10) {
                 driveLog("目的地付近なんだえ")
-                quit()
+                stop()
             }
         }
         //スレッドを開始
         driveThread.start()
     }
-    fun quit(){
+    fun stop(){
         shell.axel(0,0)
     }
     fun finish(){
@@ -210,7 +210,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         const val STATE_STACK = 2
         //サーバー走行の時に使う状態
         const val STATE_CONIDAE = 256
-        const val STATE_EXECUTING = 512
+        const val STATE_OPERATOR = 512
+        const val STATE_EXECUTING = 1024
+        //サーバー側でいじる状態
         const val STATE_ONLINE = 65536
         const val STATE_NET_ERR = 131072
     }

@@ -1,7 +1,6 @@
 package com.example.kotlindae2nd
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
@@ -23,6 +22,7 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
         key = BluetoothKommunication(intent.getStringExtra("DEVICE_NAME")!!,this)
         conidae = InductionKonidae(key,this)
         conidae.statelistener = this
+        conidae.state += InductionKonidae.STATE_CONIDAE//stateをコニダエとして登録。
         val faceThread = Thread{
             while (true){
                 Thread.sleep(20000)
@@ -31,24 +31,22 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
         }
         faceThread.start()
     }
-    fun serverDrive(){
+    private fun serverDrive(){
         val queue=Volley.newRequestQueue(this)
         var url="https://script.google.com/macros/s/AKfycbzIcRtXuKZvURu9HowEQSTGKcgEMN6Mg_cSIYxiXkXB6frjdV00zXOd5E-yQy4SKDJg/exec?"
         url += "comm=2&name=${intent.getStringExtra("USERNAME")}&${conidae.getStatusForQuery()}"
         val stringRequest= StringRequest(
             Request.Method.GET,url,
             { response ->println(response)
-                // Display the first 500 characters of the response string.
+                //レスポンスは"コマンド番号#ペイロード"の形で文字列として返ってくる。
                 val responseList = response.split("#")
                 val command = responseList[0]
-                val content = responseList[1]
+                val payload = responseList[1]
                 if(command.toInt()==2){
-                    val goal = content.split(",")
+                    val goal = payload.split(",")
                     conidae.drive(goal[0].toDouble(),goal[1].toDouble())
                 }
-                else if(command.toInt()==4){
-                    val json = JSONObject(content)
-                }
+
             },
             {})
         queue.add(stringRequest)
@@ -73,16 +71,16 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
     fun fightFace(){
         changeFace(R.drawable.fightleft,R.drawable.fightright,R.drawable.fight)
     }
-    fun normalFace(){
+    private fun normalFace(){
         changeFace(R.drawable.nomalleft,R.drawable.nomalright,R.drawable.smile)
     }
-    fun troubleFace(){
+    private fun troubleFace(){
         changeFace(R.drawable.troubleleft,R.drawable.troubleright,R.drawable.fight)
     }
     fun smileFace(){
         changeFace(R.drawable.smileright,R.drawable.smileleft,R.drawable.smile)
     }
-    fun nothingFace(){
+    private fun nothingFace(){
         changeFace(R.drawable.nothingleft,R.drawable.nothingright,R.drawable.fight)
     }
     fun surpriseFace(){
