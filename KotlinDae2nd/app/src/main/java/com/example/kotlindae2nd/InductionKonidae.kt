@@ -136,8 +136,19 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-        right = (phi/2).toInt()
-        left = (-phi/2).toInt()
+
+        right = (-0.0037037*phi*phi*phi-0.1333333*phi*phi+70).toInt()
+        left = (0.0037037*phi*phi*phi-0.1333333*phi*phi+70).toInt()
+        if(right>90){
+            right=90
+        }else if(right<-90){
+            right=-90
+        }
+        if(left>90){
+            left=90
+        }else if(left<-90){
+            left=-90
+        }
         return abs(phi).toInt()
     }
     private fun driveLog(str:String){
