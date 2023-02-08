@@ -101,7 +101,7 @@ class BluetoothKommunication(deviceName: String,context: Context) {//引数に�
         }
     }
     fun sendData(data:String){
-        println("データを送るんだえ:$data")
+        //println("データを送るんだえ:$data")
         val sendBytes = data.toByteArray()
         try{
             mOutputStream.write(sendBytes)

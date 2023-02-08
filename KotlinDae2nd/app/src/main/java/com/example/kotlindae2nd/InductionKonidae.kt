@@ -120,7 +120,6 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         driveLog("ゴールまでの距離：{$distance}目標方位{$goalAzimuth}なんだえ")
     }
     private fun calculate(): Int {
-        driveLog("センサ値を取得するんだえ")
         //センサ値の取得
         orientationAngles = shell.orientationAngles
         //現在の方位角を取得
@@ -136,9 +135,11 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-
-        right = (-0.0037037*phi*phi*phi-0.1333333*phi*phi+70).toInt()
-        left = (0.0037037*phi*phi*phi-0.1333333*phi*phi+70).toInt()
+        val preRight = right
+        val preLeft = left
+        print(phi)
+        right = (0.9*preRight+0.1*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
+        left = (0.9*preLeft+0.1*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
         if(right>90){
             right=90
         }else if(right<-90){
@@ -149,6 +150,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if(left<-90){
             left=-90
         }
+        println("$right,$left")
         return abs(phi).toInt()
     }
     private fun driveLog(str:String){
@@ -172,7 +174,6 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     //自分の状態をチェックする関数
     private fun checkSelfState(){
-        println("チェックするんだえ")
         val lastState = state
         //以下で異常がないかの判定を行うが、else if文で判定しているため、優先度の高い異常から判定するようにすること。
         if(isReverse() && state.and(STATE_REVERSE)==0){//反転していて、stateの反転がtrueじゃない時
