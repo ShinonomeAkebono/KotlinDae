@@ -67,7 +67,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 calculateToGoal()
                 try {
                     while (calculate() < 30) {
-                        shell.axel(70, 70)
+                        shell.axel(70, -70)
                         Thread.sleep(50)
                     }
                 } catch (e: InterruptedException) {
@@ -149,7 +149,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-        right = (-phi/2).toInt()
+        right = (phi/2).toInt()
         left = (phi/2).toInt()
         return abs(phi).toInt()
     }
