@@ -136,11 +136,12 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             phi = 180 - delta
         }
         phi = phi/2
-        val preRight = right
+        val
+                preRight = right
         val preLeft = left
         print(phi)
-        right = (0.9*preRight+0.1*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
-        left = (0.9*preLeft+0.1*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
+        right = (0.5*preRight+0.5*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
+        left = (0.5*preLeft+0.5*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
         if(right>90){
             right=90
         }else if(right<-90){
