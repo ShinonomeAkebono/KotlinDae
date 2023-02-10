@@ -13,6 +13,7 @@ import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
 import com.google.android.gms.location.FusedLocationProviderClient
+import kotlin.math.PI
 
 class KShell(context: Context) :SensorEventListener{
     //姿勢角関連
@@ -61,10 +62,12 @@ class KShell(context: Context) :SensorEventListener{
         )
         val rotationFinal = FloatArray(9)
         //軸の変更
-        SensorManager.remapCoordinateSystem(rotationMatrix,SensorManager.AXIS_Z,SensorManager.AXIS_MINUS_X,rotationFinal)
+        SensorManager.remapCoordinateSystem(rotationMatrix,SensorManager.AXIS_Z,SensorManager.AXIS_X,rotationFinal)
         // "mRotationMatrix" now has up-to-date information.
         SensorManager.getOrientation(rotationFinal, orientationAngles)
         // "mOrientationAngles" now has up-to-date information.
+        println("${orientationAngles[0]/PI*180},${orientationAngles[1]/PI*180},${orientationAngles[2]/PI*180}")
+
     }
 
     override fun onAccuracyChanged(Sensor: Sensor?, p1: Int) {//精度が変わったときに呼ばれる。
@@ -111,8 +114,8 @@ class KShell(context: Context) :SensorEventListener{
     }
 
     fun axel(left:Int,right:Int){//加速用。
-        mRight = right + 90
-        mLeft = -left + 90
+        mRight = -right + 90
+        mLeft = left + 90
         blue?.sendData("$mLeft,$mRight;")
     }
 
