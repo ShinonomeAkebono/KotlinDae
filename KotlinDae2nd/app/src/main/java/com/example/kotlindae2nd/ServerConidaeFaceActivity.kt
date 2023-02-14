@@ -33,7 +33,7 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
     }
     private fun serverDrive(){
         val queue=Volley.newRequestQueue(this)
-        var url="https://script.google.com/macros/s/AKfycbzIcRtXuKZvURu9HowEQSTGKcgEMN6Mg_cSIYxiXkXB6frjdV00zXOd5E-yQy4SKDJg/exec?"
+        var url="https://script.google.com/macros/s/AKfycbysbL-F44yfNugcDVajCX3-U7vdrFqe_GL8U8z0p1FmP9Z1P0Gg_PQJuKOuN92KSAFd/exec"
         url += "comm=2&name=${intent.getStringExtra("USERNAME")}&${conidae.getStatusForQuery()}"
         val stringRequest= StringRequest(
             Request.Method.GET,url,
@@ -44,14 +44,20 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
                 val payload = responseList[1]
                 if(command.toInt()==2){
                     val goal = payload.split(",")
-                    conidae.drive(goal[0].toDouble(),goal[1].toDouble())
+                    if(conidae.getGoalLat()!=goal[0].toDouble()||conidae.getGoalLong().toDouble()!=goal[1].toDouble()){
+                        //新たに取得した目的地がこれまでと違った場合は、conidaeのdriveThreadを一旦中断して新しく始める。
+                        conidae.stop()
+                        conidae.drive(goal[0].toDouble(),goal[1].toDouble())
+                    }
+                    if(conidae.state.and(InductionKonidae.STATE_EXECUTING)!=0){//ミッション実行中のステータスでないとき
+                        conidae.state+=InductionKonidae.STATE_EXECUTING
+                    }
                 }
 
             },
             {})
         queue.add(stringRequest)
     }
-
     override fun onDestroy() {
         super.onDestroy()
         conidae.finish()

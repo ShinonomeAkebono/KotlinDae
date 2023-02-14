@@ -74,6 +74,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     fun stop(){
         shell.axel(0,0)
+        driveThread.interrupt()
     }
     fun finish(){
         driveLog("もうやめるんだえ")
@@ -135,7 +136,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-        phi = phi/2
+        phi /= 2
         val preRight = right
         val preLeft = left
         print(phi)
@@ -197,7 +198,6 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }
 
     }
-
     private fun isReverse():Boolean{
         if(shell.orientationAngles[1]>1.3962f||abs(shell.orientationAngles[2])>1.5707f){
             return true
@@ -219,5 +219,11 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     fun getStatusForQuery():String {
         return "lat=${shell.nowLat.toString()}&long=${shell.nowLon.toString()}&state=$state"
+    }
+    fun getGoalLat():Double{
+        return goalLat
+    }
+    fun getGoalLong():Double{
+        return goalLon
     }
 }

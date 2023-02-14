@@ -66,7 +66,7 @@ class KShell(context: Context) :SensorEventListener{
         // "mRotationMatrix" now has up-to-date information.
         SensorManager.getOrientation(rotationFinal, orientationAngles)
         // "mOrientationAngles" now has up-to-date information.
-        println("${orientationAngles[0]/PI*180},${orientationAngles[1]/PI*180},${orientationAngles[2]/PI*180}")
+        //println("${orientationAngles[0]/PI*180},${orientationAngles[1]/PI*180},${orientationAngles[2]/PI*180}")
 
     }
 
