@@ -73,6 +73,8 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             run {
                 Toast.makeText(this, "${it.position.latitude},${it.position.longitude} is selected", Toast.LENGTH_SHORT).show()
                 val dialog = SendGoalDialog(markerArray)
+                dialog.listSelectedListener = this
+
                 dialog.show(supportFragmentManager,"title")
             }
             true
@@ -95,20 +97,24 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
     override fun onListSelected(userName: String) {
         super.onListSelected(userName)
         Toast.makeText(this, "${userName}が選択されました", Toast.LENGTH_SHORT).show()
+        recipientName = userName
+        communicateServer(SET_GOAL)
     }
     private fun communicateServer(sendCommand:Int){//サーバー通信をする関数。渡されたコマンドによって動作内容を変える。
         val queue= Volley.newRequestQueue(this)
         var url="https://script.google.com/macros/s/AKfycbysbL-F44yfNugcDVajCX3-U7vdrFqe_GL8U8z0p1FmP9Z1P0Gg_PQJuKOuN92KSAFd/exec?"
-        url += if(sendCommand== UPDATE_MAP){//マップ更新
-            "comm=$UPDATE_MAP"
-        } else if(sendCommand== SET_GOAL){
-            "comm=$SET_GOAL"
-        } else{
-            return
+        url += when (sendCommand) {
+            UPDATE_MAP -> {//マップ更新
+                "comm=$UPDATE_MAP"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(UPDATE_MAP)}"
+            }
+            SET_GOAL -> {
+                "comm=$SET_GOAL"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(SET_GOAL)}"
+            }
+            else -> {
+                return
+            }
         }
-        url += "&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(UPDATE_MAP)}"
-        print(url)
-
+        println(url)
         val stringRequest= StringRequest(
             Request.Method.GET,url,
             { response ->println(response)
@@ -158,7 +164,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
     private fun makeExtraQuery(sendCommand: Int):String{//コマンドによってクエリに追加する内容を変える関数。
         var sendQuery = "lat=${shell.nowLat.toString()}&long=${shell.nowLon.toString()}&state=$state"
         if(sendCommand== SET_GOAL){
-            sendQuery+="recipient=$recipientName&gLat=$gLat&gLong=$gLong"
+            sendQuery+="&recipient=$recipientName&gLat=$gLat&gLong=$gLong&gUser=NONE"
         }
         return sendQuery
 
