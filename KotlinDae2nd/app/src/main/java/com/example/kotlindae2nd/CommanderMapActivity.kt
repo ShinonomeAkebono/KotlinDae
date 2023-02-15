@@ -3,12 +3,15 @@ package com.example.kotlindae2nd
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
@@ -26,7 +29,15 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityCommanderMapBinding
     private lateinit var detector: GestureDetectorCompat
+    private lateinit var offlineDae:Bitmap
+    private lateinit var onlineDae:Bitmap
+    private lateinit var errDae:Bitmap
+    private lateinit var offlineOpe:Bitmap
+    private lateinit var onlineOpe:Bitmap
+    private lateinit var errOpe:Bitmap
     private var markerArray = mutableListOf<Marker>()
+    private var goalArray = mutableListOf<Marker>()
+    private var polylineArray = mutableListOf<Polyline>()
     private var state = InductionKonidae.STATE_OPERATOR
     private var gLat = 0.0
     private var gLong = 0.0
@@ -36,6 +47,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         super.onCreate(savedInstanceState)
         binding = ActivityCommanderMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        initBitmaps()
         shell = KShell(this)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
@@ -52,8 +64,8 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         checkPermission()
         mMap.isMyLocationEnabled = true
         // Add a marker in Sydney and move the camera
-        val sydney = LatLng(-34.0, 151.0)
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        val tanegashima = LatLng(30.37503154252748, 130.95760316154673)
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(tanegashima))
         mMap.setOnMapLongClickListener{
             mMap.addMarker(MarkerOptions().draggable(true).position(it).title("Goal"))
             mMap.moveCamera(CameraUpdateFactory.newLatLng(it))
@@ -61,7 +73,12 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         }
         mMap.setOnMarkerClickListener{
             run {
-                Toast.makeText(this, "${it.position.latitude},${it.position.longitude} is selected", Toast.LENGTH_SHORT).show()
+                if(it.title.equals("Goal")){
+                    Toast.makeText(this, "${it.position.latitude},${it.position.longitude} is selected", Toast.LENGTH_SHORT).show()
+                }
+                else{
+                    Toast.makeText(this, "${it.title}is Selected", Toast.LENGTH_SHORT).show()
+                }
                 val dialog = SendGoalDialog(markerArray)
                 gLat = it.position.latitude
                 gLong = it.position.longitude
@@ -71,8 +88,11 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             true
         }
     }
-
-    private fun removeAllMarkers(){ //マーカーを全削除する関数
+    override fun onDestroy() {
+        super.onDestroy()
+        communicateServer(LOGOUT)
+    }
+    private fun removeAllOverlays(){ //マーカーを全削除する関数
         for(marker in markerArray){
             try{
                 println(marker.title)
@@ -82,7 +102,25 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
                 print("なにかしら問題が発生したんだえ")
             }
         }
+        for(polyLine in polylineArray){
+            try{
+                polyLine.remove()
+            }
+            catch(e:Exception){
+                print("なにかしら問題が発生したんだえ")
+            }
+        }
+        for(goal in goalArray){
+            try{
+                goal.remove()
+            }
+            catch (e:Exception){
+                print("何かしら問題が発生したんだえ")
+            }
+        }
         markerArray = mutableListOf()
+        goalArray = mutableListOf()
+        polylineArray = mutableListOf()
     }
 
     override fun onListSelected(userName: String) {
@@ -129,7 +167,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
                     UPDATE_MAP -> {//帰ってきたコマンドがマップ更新のとき
                         val retJson = JSONObject(payload)
                         val keys: Iterator<String> = retJson.keys()
-                        removeAllMarkers()//一旦マップ上のマーカーを全消去
+                        removeAllOverlays()//マップ上のオーバーレイを全消去
                         while(keys.hasNext()){
                             val key = keys.next()
                             val json = retJson.getJSONObject(key)
@@ -139,6 +177,19 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
                                 val status = json.getInt("Status")
                                 val option = createMarkOptionForStatus(currentPosition,usrName,status)
                                 val marker = mMap.addMarker(option)
+                                if(status.and(InductionKonidae.STATE_EXECUTING)!=0){
+                                    try {
+                                        val goalPosition = LatLng(json.getDouble("GoalLat"),json.getDouble("GoalLong"))
+                                        val gOption = MarkerOptions().position(goalPosition).title("Goal")
+                                        val goalMark = mMap.addMarker(gOption)
+                                        goalArray.add(goalMark!!)
+                                        val lineOption = PolylineOptions().add(currentPosition).add(goalPosition).color(ContextCompat.getColor(this,R.color.purple_200))
+                                        val lineToGoal = mMap.addPolyline(lineOption)
+                                        polylineArray.add(lineToGoal)
+                                    }catch (e:Exception){
+                                        Toast.makeText(this, "${usrName}に正しいゴールが設定されていません！", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                                 markerArray.add(marker!!)//マップにマーカーを追加しつつ、あとで一括管理をするためにリストに格納。
                             }catch (e:java.lang.Exception){
                                 println("It does not Double!")
@@ -146,7 +197,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
                         }
                     }
                     SET_GOAL -> {
-                        Toast.makeText(this, "${payload}にゴールを設定しました！", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, payload, Toast.LENGTH_SHORT).show()
                     }
                     LOGOUT -> {
                         Toast.makeText(this, "ログアウトしました。", Toast.LENGTH_SHORT).show()
@@ -156,15 +207,44 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             {})
         queue.add(stringRequest)
     }
-    private fun createMarkOptionForStatus(position:LatLng,usrName:String,status:Int): MarkerOptions {
+    private fun createMarkOptionForStatus(position:LatLng,usrName:String,status:Int): MarkerOptions {//and()==0とすればfalse,and()==!0はtrue
         val returnOption = MarkerOptions().position(position).title(usrName)
-        if(status.and(InductionKonidae.STATE_CONIDAE)!=0&&status.and(InductionKonidae.STATE_NET_ERR)!=0){
-            returnOption.icon(BitmapDescriptorFactory.fromResource(R.drawable.errconidae))
+        if(status.and(InductionKonidae.STATE_CONIDAE)!=0){//conidaeだった時
+            if(status.and(InductionKonidae.STATE_NET_ERR)!=0){//ネットエラーなら
+                returnOption.icon(BitmapDescriptorFactory.fromBitmap(errDae))
+            }
+            else{
+                if(status.and(InductionKonidae.STATE_ONLINE)!=0){//オンラインなら
+                    returnOption.icon(BitmapDescriptorFactory.fromBitmap(onlineDae))
+                }
+                else{//オフラインなら
+                    returnOption.icon(BitmapDescriptorFactory.fromBitmap(offlineDae))
+                }
+            }
         }
-        if(status.and(InductionKonidae.STATE_NET_ERR)==0){
-            returnOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+        else if(status.and(InductionKonidae.STATE_OPERATOR)!=0){//operatorだった時
+            if(status.and(InductionKonidae.STATE_NET_ERR)!=0){//ネットエラーなら
+                returnOption.icon(BitmapDescriptorFactory.fromBitmap(errOpe))
+            }
+            else{
+                if(status.and(InductionKonidae.STATE_ONLINE)!=0){//オンラインなら
+                    returnOption.icon(BitmapDescriptorFactory.fromBitmap(onlineOpe))
+                }
+                else{//オフラインなら
+                    returnOption.icon(BitmapDescriptorFactory.fromBitmap(offlineOpe))
+                }
+            }
         }
+
         return returnOption
+    }
+    private fun initBitmaps(){
+        offlineDae = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.offlinedae),100,100,true)
+        onlineDae = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.onlinedae),100,100,true)
+        errDae = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.errconidae),100,100,true)
+        offlineOpe = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.offlineoperator),100,140,true)
+        onlineOpe = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.onlineoperator),100,140,true)
+        errOpe = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(this.resources,R.drawable.erroroperator),100,140,true)
     }
     private fun makeExtraQuery(sendCommand: Int):String{//コマンドによってクエリに追加する内容を変える関数。
         var sendQuery = "lat=${shell.nowLat.toString()}&long=${shell.nowLon.toString()}&state=$state"
@@ -181,7 +261,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         }
         return super.dispatchTouchEvent(ev)
     }
-    fun communicate(){
+    fun updateMap(){
         Toast.makeText(this, "更新中...", Toast.LENGTH_SHORT).show()
         communicateServer(UPDATE_MAP)
         Toast.makeText(this,"更新が完了しました！",Toast.LENGTH_SHORT).show()
@@ -191,7 +271,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         GestureDetector.SimpleOnGestureListener() {
         private var activity = mapAct
         override fun onDoubleTap(e: MotionEvent): Boolean {
-            activity.communicate()
+            activity.updateMap()
             return super.onDoubleTap(e)
         }
     }
