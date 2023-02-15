@@ -16,7 +16,7 @@ class SendGoalDialog(markerList:MutableList<Marker>):DialogFragment() {
             userNames.add(marker.title!!)
         }
         val builder = AlertDialog.Builder(activity)
-        builder.setTitle("送信者を選択")
+        builder.setTitle("誰のゴールに設定しますか？")
             .setItems(userNames.toTypedArray()
             ) { _, i -> listSelectedListener?.onListSelected(userNames[i]) }
         return builder.create()

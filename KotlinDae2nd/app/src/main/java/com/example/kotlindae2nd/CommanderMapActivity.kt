@@ -43,16 +43,6 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         mapFragment.getMapAsync(this)
         detector = GestureDetectorCompat(this,MyGestureListener(this))
     }
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         //マップのセットアップ
@@ -73,8 +63,9 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             run {
                 Toast.makeText(this, "${it.position.latitude},${it.position.longitude} is selected", Toast.LENGTH_SHORT).show()
                 val dialog = SendGoalDialog(markerArray)
+                gLat = it.position.latitude
+                gLong = it.position.longitude
                 dialog.listSelectedListener = this
-
                 dialog.show(supportFragmentManager,"title")
             }
             true
@@ -110,6 +101,9 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             SET_GOAL -> {
                 "comm=$SET_GOAL"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(SET_GOAL)}"
             }
+            LOGOUT -> {
+                "comm=$LOGOUT"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(SET_GOAL)}"
+            }
             else -> {
                 return
             }
@@ -120,32 +114,43 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
             { response ->println(response)
                 //レスポンスは"コマンド番号#ペイロード"の形で文字列として返ってくる。
                 val responseList = response.split("#")
-                val command = responseList[0]
+                val returnCommand = responseList[0]
                 val payload = responseList[1]
-                if(command.toInt()==2){
-                    print(response)
+                var command = 0
+                try{
+                    command = returnCommand.toInt()
+                }catch (e:Exception){
+                    Toast.makeText(this, "エラー：$returnCommand", Toast.LENGTH_LONG).show()
                 }
-                if(command.toInt()== UPDATE_MAP){//帰ってきたコマンドがマップ更新のとき
-                    val retJson = JSONObject(payload)
-                    val keys: Iterator<String> = retJson.keys()
-                    removeAllMarkers()//一旦マップ上のマーカーを全消去
-                    while(keys.hasNext()){
-                        val key = keys.next()
-                        val json = retJson.getJSONObject(key)
-                        try{
-                            val currentPosition = LatLng(json.getDouble("Latitude"),json.getDouble("Longitude"))
-                            val usrName = json.getString("UserName")
-                            val status = json.getInt("Status")
-                            val option = createMarkOptionForStatus(currentPosition,usrName,status)
-                            val marker = mMap.addMarker(option)
-                            markerArray.add(marker!!)//マップにマーカーを追加しつつ、あとで一括管理をするためにリストに格納。
-                        }catch (e:java.lang.Exception){
-                            println("It does not Double!")
+                when (command) {
+                    GOTO_GRANTED_GOAL -> {
+                        print(response)
+                    }
+                    UPDATE_MAP -> {//帰ってきたコマンドがマップ更新のとき
+                        val retJson = JSONObject(payload)
+                        val keys: Iterator<String> = retJson.keys()
+                        removeAllMarkers()//一旦マップ上のマーカーを全消去
+                        while(keys.hasNext()){
+                            val key = keys.next()
+                            val json = retJson.getJSONObject(key)
+                            try{
+                                val currentPosition = LatLng(json.getDouble("Latitude"),json.getDouble("Longitude"))
+                                val usrName = json.getString("UserName")
+                                val status = json.getInt("Status")
+                                val option = createMarkOptionForStatus(currentPosition,usrName,status)
+                                val marker = mMap.addMarker(option)
+                                markerArray.add(marker!!)//マップにマーカーを追加しつつ、あとで一括管理をするためにリストに格納。
+                            }catch (e:java.lang.Exception){
+                                println("It does not Double!")
+                            }
                         }
                     }
-                }
-                if(command.toInt()== SET_GOAL){
-                    print(payload)
+                    SET_GOAL -> {
+                        Toast.makeText(this, "${payload}にゴールを設定しました！", Toast.LENGTH_SHORT).show()
+                    }
+                    LOGOUT -> {
+                        Toast.makeText(this, "ログアウトしました。", Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
             {})
@@ -153,8 +158,8 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
     }
     private fun createMarkOptionForStatus(position:LatLng,usrName:String,status:Int): MarkerOptions {
         val returnOption = MarkerOptions().position(position).title(usrName)
-        if(status.and(InductionKonidae.STATE_CONIDAE)!=0){
-            returnOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
+        if(status.and(InductionKonidae.STATE_CONIDAE)!=0&&status.and(InductionKonidae.STATE_NET_ERR)!=0){
+            returnOption.icon(BitmapDescriptorFactory.fromResource(R.drawable.errconidae))
         }
         if(status.and(InductionKonidae.STATE_NET_ERR)==0){
             returnOption.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
@@ -191,8 +196,10 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
         }
     }
     companion object{
+        private const val GOTO_GRANTED_GOAL = 2
         private const val UPDATE_MAP = 4
         private const val SET_GOAL = 8
+        private const val LOGOUT = 64
         private const val REQUEST_CODE_PERMISSIONS = 90
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
