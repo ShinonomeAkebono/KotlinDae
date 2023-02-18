@@ -1,18 +1,19 @@
 package com.example.kotlindae2nd
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.kotlindae2nd.databinding.ActivityServerConidaeFaceBinding
-import org.json.JSONObject
 
-class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateListener {
+class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateListener,InductionKonidae.GoalListener {
 
     private lateinit var binding:ActivityServerConidaeFaceBinding
     private lateinit var key:BluetoothKommunication
     private lateinit var conidae:InductionKonidae
+    private lateinit var faceThread:Thread
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,18 +24,36 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
         conidae = InductionKonidae(key,this)
         conidae.statelistener = this
         conidae.state += InductionKonidae.STATE_CONIDAE//stateをコニダエとして登録。
-        val faceThread = Thread{
+        faceThread = Thread{
             while (true){
-                Thread.sleep(20000)
-                serverDrive()
+                try {
+                    Thread.sleep(20000)
+                    serverDrive(REGISTER_AND_REQUEST_GOAL)
+                }catch (e:java.lang.Exception){
+                    break
+                }
             }
         }
         faceThread.start()
     }
-    private fun serverDrive(){
+    private fun serverDrive(sendCommand:Int){
         val queue=Volley.newRequestQueue(this)
-        var url="https://script.google.com/macros/s/AKfycbysbL-F44yfNugcDVajCX3-U7vdrFqe_GL8U8z0p1FmP9Z1P0Gg_PQJuKOuN92KSAFd/exec"
-        url += "comm=2&name=${intent.getStringExtra("USERNAME")}&${conidae.getStatusForQuery()}"
+        var url="https://script.google.com/macros/s/AKfycbysbL-F44yfNugcDVajCX3-U7vdrFqe_GL8U8z0p1FmP9Z1P0Gg_PQJuKOuN92KSAFd/exec?"
+        url += when (sendCommand) {
+            REGISTER_AND_REQUEST_GOAL -> {
+                "comm=2"
+            }
+            NOTICE_GOAL -> {
+                "comm=16"
+            }
+            LOGOUT -> {
+                "comm=$LOGOUT"
+            }
+            else -> {
+                return
+            }
+        }
+        url += "&name=${intent.getStringExtra("USERNAME")}&${conidae.getStatusForQuery()}"
         val stringRequest= StringRequest(
             Request.Method.GET,url,
             { response ->println(response)
@@ -42,25 +61,29 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
                 val responseList = response.split("#")
                 val command = responseList[0]
                 val payload = responseList[1]
-                if(command.toInt()==2){
+                if(command.toInt()== REGISTER_AND_REQUEST_GOAL){
                     val goal = payload.split(",")
-                    if(conidae.getGoalLat()!=goal[0].toDouble()||conidae.getGoalLong().toDouble()!=goal[1].toDouble()){
+                    if(conidae.getGoalLat()!=goal[0].toDouble()||conidae.getGoalLong()!=goal[1].toDouble()){
                         //新たに取得した目的地がこれまでと違った場合は、conidaeのdriveThreadを一旦中断して新しく始める。
                         conidae.stop()
                         conidae.drive(goal[0].toDouble(),goal[1].toDouble())
                     }
-                    if(conidae.state.and(InductionKonidae.STATE_EXECUTING)!=0){//ミッション実行中のステータスでないとき
+                    if(conidae.state.and(InductionKonidae.STATE_EXECUTING)==0){//ミッション実行中のステータスでないとき
                         conidae.state+=InductionKonidae.STATE_EXECUTING
                     }
                 }
-
+                else if(command.toInt()== NOTICE_GOAL){
+                }
             },
             {})
         queue.add(stringRequest)
     }
     override fun onDestroy() {
         super.onDestroy()
+
         conidae.finish()
+        serverDrive(LOGOUT)
+        faceThread.interrupt()
     }
     override fun onStateChanged(state: Int){
         if(state.and(InductionKonidae.STATE_REVERSE)!=0){
@@ -102,5 +125,15 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
             mMouth.setImageResource(mouth)
         })
     }
-
+    override fun onGoalDetected() {
+        if(conidae.state.and(InductionKonidae.STATE_EXECUTING)!=0){
+            conidae.state -= InductionKonidae.STATE_EXECUTING
+        }
+        serverDrive(NOTICE_GOAL)
+    }
+    companion object{
+        const val REGISTER_AND_REQUEST_GOAL = 2
+        const val NOTICE_GOAL = 16
+        const val LOGOUT = 64
+    }
 }

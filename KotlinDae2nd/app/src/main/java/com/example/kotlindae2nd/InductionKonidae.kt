@@ -6,7 +6,7 @@ import kotlin.math.abs
 
 class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     //スレッドとインスタンス化したいクラスの宣言
-    private lateinit var driveThread: Thread
+    private var driveThread: Thread? = null
     private var shell: KShell
     private var shijimi: KShijimi
     private var mContext = context
@@ -25,10 +25,14 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     //状態記録用の変数
     var state = 0
     var statelistener:StateListener? = null
+    var goalListener:GoalListener? = null
     private lateinit var selfCheckThread: Thread
 
     interface StateListener {//状態が変化したときのイベントリスナー
         fun onStateChanged(state:Int)
+    }
+    interface GoalListener {//ゴール判定ができたときのイベントリスナー
+        fun onGoalDetected()
     }
 
     init {
@@ -67,19 +71,21 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             if (distance!! < 10) {
                 driveLog("目的地付近なんだえ")
                 stop()
+                goalListener?.onGoalDetected()
             }
         }
         //スレッドを開始
-        driveThread.start()
+        driveThread?.start()
     }
     fun stop(){
         shell.axel(0,0)
-        driveThread.interrupt()
+        driveThread?.interrupt()
     }
     fun finish(){
         driveLog("もうやめるんだえ")
         //スレッドを止める
-        driveThread.interrupt()
+
+        driveThread?.interrupt()
         selfCheckThread.interrupt()
         driveLog("止まるんだえ")
         shell.quit()
@@ -139,7 +145,6 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         phi /= 2
         val preRight = right
         val preLeft = left
-        print(phi)
         right = (0.5*preRight+0.5*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
         left = (0.5*preLeft+0.5*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
         if(right>90){

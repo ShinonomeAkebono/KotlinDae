@@ -140,7 +140,7 @@ class CommanderMapActivity : AppCompatActivity(), OnMapReadyCallback ,SendGoalDi
                 "comm=$SET_GOAL"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(SET_GOAL)}"
             }
             LOGOUT -> {
-                "comm=$LOGOUT"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(SET_GOAL)}"
+                "comm=$LOGOUT"+"&name=${intent.getStringExtra("USERNAME")}&${makeExtraQuery(LOGOUT)}"
             }
             else -> {
                 return
