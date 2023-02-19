@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Sensor
+import android.hardware.Sensor.TYPE_PRESSURE
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
@@ -23,6 +24,7 @@ class KShell(context: Context) :SensorEventListener{
 
     private val rotationMatrix = FloatArray(9)
     val orientationAngles = FloatArray(3)
+    var pressureReading:Float?=null
     //GPS関連
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient//1.
     private lateinit var locationCallback: LocationCallback//2.
@@ -48,6 +50,9 @@ class KShell(context: Context) :SensorEventListener{
             System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
         } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
             System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+        }else if(event.sensor.type==Sensor.TYPE_PRESSURE){
+            pressureReading=event.values[0]
+
         }
         updateOrientationAngles()
     }
@@ -107,6 +112,8 @@ class KShell(context: Context) :SensorEventListener{
         sensorManager.registerListener(this,accelerometer,SensorManager.SENSOR_DELAY_GAME,SensorManager.SENSOR_DELAY_UI)
         val magneticField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         sensorManager.registerListener(this,magneticField,SensorManager.SENSOR_DELAY_GAME,SensorManager.SENSOR_DELAY_UI)
+        val pressure=sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
+        sensorManager.registerListener(this,pressure,SensorManager.SENSOR_DELAY_GAME,SensorManager.SENSOR_DELAY_UI)
     }
 
     fun onPause(){//画面を閉じるときにはセンサの登録を解除。

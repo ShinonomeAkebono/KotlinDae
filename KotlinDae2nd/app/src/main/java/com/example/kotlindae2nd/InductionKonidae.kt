@@ -7,6 +7,7 @@ import kotlin.math.abs
 class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     //スレッドとインスタンス化したいクラスの宣言
     private lateinit var driveThread: Thread
+    private var landDetectThread:Thread?=null
     private var shell: KShell
     private var shijimi: KShijimi
     private var mContext = context
@@ -22,6 +23,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var goalAzimuth:Double? = null
     private var distance:Float? = null
     private var magNorth = 0.0
+    private var minPressure:Float?=null
     //状態記録用の変数
     var state = 0
     var statelistener:StateListener? = null
@@ -44,6 +46,24 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         startCheck()
     }
     //自立走行するプログラム
+    fun landAndGo(gLat:Double,gLong:Double){
+        landDetectThread=Thread{
+            while(state.and(STATE_PRESSUREOK)==0) {
+                try {
+                    Thread.sleep(1000)
+                } catch (e: Exception) {
+                    break
+                }
+            }
+            try {
+                Thread.sleep(15000)
+            } catch (e: Exception) {
+            }
+            drive(gLat,gLong)
+        }
+        landDetectThread!!.start()
+
+    }
     fun drive(gLat:Double,gLong:Double) {
         goalLat = gLat
         goalLon = gLong
@@ -81,6 +101,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         //スレッドを止める
         driveThread.interrupt()
         selfCheckThread.interrupt()
+        landDetectThread?.interrupt()
         driveLog("止まるんだえ")
         shell.quit()
         driveLog("車を降りるんだえ")
@@ -193,6 +214,15 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             state += STATE_CONNECTION_ERR
         }
 
+        if(isPressureOK()){
+            if(state.and(STATE_PRESSUREOK)==0) {
+                state += STATE_PRESSUREOK
+            }
+        }else{
+            if(state.and(STATE_PRESSUREOK)!=0){
+                state-= STATE_PRESSUREOK
+            }
+        }
         if(lastState!=state){//状態が変化していた時
             statelistener?.onStateChanged(state)
         }
@@ -204,8 +234,27 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }
         return false
     }
+    private  fun isPressureOK():Boolean{
+        if(minPressure==null){
+            minPressure=shell.pressureReading!!
+            return false
+        }else{
+            if(shell.pressureReading!!<minPressure!!){
+                minPressure=shell.pressureReading
+                return false
+            }else{
+               val fallDisrance=(shell.pressureReading!!-minPressure!!) *8.00372
+                if(fallDisrance>20){
+                    return true
+                }else{
+                    return false
+                }
+            }
+        }
+    }
     companion object{
         //自立走行でも使う状態
+        const val STATE_PRESSUREOK=16
         const val STATE_REVERSE = 8
         const val STATE_CONNECTION_ERR = 4
         const val STATE_STACK = 2
