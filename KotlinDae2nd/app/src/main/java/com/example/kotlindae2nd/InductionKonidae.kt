@@ -59,8 +59,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 Thread.sleep(1000)
             }
             calculateToGoal()
-            while (distance!! > 10) {
+            while (distance!! > 30) {
                 //目標方位を向く
+                calculateToGoal()
                 induction()
                 if (breaker) {
                     driveLog("方向転換中に終わるんだえ")
@@ -68,10 +69,11 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                     break
                 }
             }
-            if (distance!! < 10) {
+            if (distance!! < 30) {
                 driveLog("目的地付近なんだえ")
-                stop()
+                shell.axel(0,0)
                 goalListener?.onGoalDetected()
+                stop()
             }
         }
         //スレッドを開始
@@ -82,9 +84,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         driveThread?.interrupt()
     }
     fun finish(){
+        shell.axel(0,0)
         driveLog("もうやめるんだえ")
         //スレッドを止める
-
         driveThread?.interrupt()
         selfCheckThread.interrupt()
         driveLog("止まるんだえ")
