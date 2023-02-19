@@ -79,7 +79,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 Thread.sleep(1000)
             }
             calculateToGoal()
-            while (distance!! > 10) {
+            while (distance!! > 5) {
                 //目標方位を向く
                 calculateToGoal()
                 induction()
@@ -89,7 +89,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                     break
                 }
             }
-            if (distance!! < 10) {
+            if (distance!! < 5) {
                 driveLog("目的地付近なんだえ")
                 shell.axel(0,0)
                 goalListener?.onGoalDetected()
