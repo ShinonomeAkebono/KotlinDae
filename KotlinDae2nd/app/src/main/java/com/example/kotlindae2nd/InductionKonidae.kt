@@ -28,6 +28,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     var state = 0
     var statelistener:StateListener? = null
     var goalListener:GoalListener? = null
+    var prePrePhi = 0.0
+    var prePhi = 0.0
+    var preM = 0.0
     private lateinit var selfCheckThread: Thread
 
     interface StateListener {//状態が変化したときのイベントリスナー
@@ -206,11 +209,14 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }else if((180<=delta)&&(delta<=360)){
             phi = 180 - delta
         }
-        phi /= 2
-        val preRight = right
-        val preLeft = left
-        right = (0.5*preRight+0.5*(-0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
-        left = (0.5*preLeft+0.5*(0.00296296*phi*phi*phi-0.1333333*phi*phi+70.0)).toInt()
+
+        val m = preM+0.01*phi+0.1*(phi-prePhi)+0.03*(prePhi-prePrePhi)
+        right = (50-m).toInt()
+        left = (50+m).toInt()
+        preM = m
+        prePrePhi = prePhi
+        prePhi = phi
+
         if(right>90){
             right=90
         }else if(right<-90){
