@@ -14,6 +14,7 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
     private lateinit var key:BluetoothKommunication
     private lateinit var conidae:InductionKonidae
     private lateinit var faceThread:Thread
+    private var isFirst = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,8 +66,12 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
                     val goal = payload.split(",")
                     if(conidae.getGoalLat()!=goal[0].toDouble()||conidae.getGoalLong()!=goal[1].toDouble()){
                         //新たに取得した目的地がこれまでと違った場合は、conidaeのdriveThreadを一旦中断して新しく始める。
-                        conidae.stop()
-                        conidae.drive(goal[0].toDouble(),goal[1].toDouble())
+                        if(isFirst){
+                            conidae.driveForServer(goal[0].toDouble(),goal[1].toDouble())
+                            isFirst = false
+                        }else{
+                            conidae.setGoals(goal[0].toDouble(),goal[1].toDouble())
+                        }
                     }
                     if(conidae.state.and(InductionKonidae.STATE_EXECUTING)==0){//ミッション実行中のステータスでないとき
                         conidae.state+=InductionKonidae.STATE_EXECUTING

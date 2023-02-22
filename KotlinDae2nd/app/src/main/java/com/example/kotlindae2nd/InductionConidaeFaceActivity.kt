@@ -21,7 +21,7 @@ class InductionConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateL
         key = BluetoothKommunication(intent.getStringExtra("DEVICE_NAME")!!,this)
         conidae = InductionKonidae(key,this)
         conidae.statelistener = this
-        conidae.drive(intent.getDoubleExtra("GOAL_LAT",0.0),intent.getDoubleExtra("GOAL_LONG",0.0))
+        conidae.landAndGo(intent.getDoubleExtra("GOAL_LAT",0.0),intent.getDoubleExtra("GOAL_LONG",0.0))
     }
 
     override fun onDestroy() {
@@ -59,7 +59,10 @@ class InductionConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateL
     }
 
     override fun onStateChanged(state: Int){
-        if(state.and(InductionKonidae.STATE_REVERSE)!=0){
+        if(state.and(InductionKonidae.STATE_PRESSUREOK)==0){
+            fightFace()
+        }
+        else if(state.and(InductionKonidae.STATE_REVERSE)!=0){
             nothingFace()
         }
         else if(state.and(InductionKonidae.STATE_CONNECTION_ERR)!=0){

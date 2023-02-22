@@ -23,7 +23,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var goalAzimuth:Double? = null
     private var distance:Float? = null
     private var magNorth = 0.0
-    private var minPressure:Float?=null
+    private var minPressure = Float.MAX_VALUE
     //状態記録用の変数
     var state = 0
     var statelistener:StateListener? = null
@@ -51,24 +51,30 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     //自立走行するプログラム
     fun landAndGo(gLat:Double,gLong:Double){
+        var isDriveOk = true
         landDetectThread=Thread{
             while(state.and(STATE_PRESSUREOK)==0) {
                 try {
                     Thread.sleep(1000)
                 } catch (e: Exception) {
+                    isDriveOk = false
                     break
                 }
             }
             try {
                 Thread.sleep(15000)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
+                isDriveOk = false
             }
-            drive(gLat,gLong)
+            if(isDriveOk){
+                drive(gLat,gLong)
+            }
         }
-        landDetectThread!!.start()
+        landDetectThread?.start()
 
     }
     fun drive(gLat:Double,gLong:Double) {
+        driveThread = null
         goalLat = gLat
         goalLon = gLong
         driveLog("運転するんだえ")
@@ -99,6 +105,41 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         //スレッドを開始
         driveThread?.start()
     }
+    fun setGoals(gLat:Double,gLong:Double){
+        goalLat = gLat
+        goalLon = gLong
+    }
+    fun driveForServer(gLat:Double,gLong:Double){
+        driveThread = null
+        goalLat = gLat
+        goalLon = gLong
+        driveLog("運転するんだえ")
+        //スレッドを定義
+        driveThread = Thread {
+            while ((shell.nowLat==null)||(shell.nowLon==null)){
+                driveLog("現在値取得中だえ")
+                Thread.sleep(1000)
+            }
+            calculateToGoal()
+            while (true) {
+                //目標方位を向く
+                calculateToGoal()
+                induction()
+                if (breaker) {
+                    driveLog("方向転換中に終わるんだえ")
+                    stop()
+                    break
+                }
+                if (distance!! < 5) {
+                    driveLog("目的地付近なんだえ")
+                    shell.axel(0,0)
+                    goalListener?.onGoalDetected()
+                }
+            }
+        }
+        //スレッドを開始
+        driveThread?.start()
+    }
     fun stop(){
         shell.axel(0,0)
         driveThread?.interrupt()
@@ -107,9 +148,9 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         shell.axel(0,0)
         driveLog("もうやめるんだえ")
         //スレッドを止める
+        landDetectThread?.interrupt()
         driveThread?.interrupt()
         selfCheckThread.interrupt()
-        landDetectThread?.interrupt()
         driveLog("止まるんだえ")
         shell.quit()
         driveLog("車を降りるんだえ")
@@ -242,21 +283,13 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         return false
     }
     private  fun isPressureOK():Boolean{
-        if(minPressure==null){
+        shell.pressureReading?:return false
+        return if(shell.pressureReading!!< minPressure){
             minPressure=shell.pressureReading!!
-            return false
+            false
         }else{
-            if(shell.pressureReading!!<minPressure!!){
-                minPressure=shell.pressureReading
-                return false
-            }else{
-               val fallDisrance=(shell.pressureReading!!-minPressure!!) *8.00372
-                if(fallDisrance>20){
-                    return true
-                }else{
-                    return false
-                }
-            }
+            val fallDistance=(shell.pressureReading!!- minPressure) *8.00372
+            fallDistance>10
         }
     }
     companion object{
