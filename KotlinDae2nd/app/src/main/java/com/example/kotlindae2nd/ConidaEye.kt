@@ -7,13 +7,14 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.ObjectDetector
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -22,13 +23,20 @@ import java.util.concurrent.Executors
 class ConidaEye(nwContext : Activity) {
     private var nowContext = nwContext
     private var imageCapture: ImageCapture? = null
-    private var cameraExecutor: ExecutorService
+    private var cameraExecutor: ExecutorService =Executors.newSingleThreadExecutor()
+    private val objectDetector: ObjectDetector by lazy {
+        val option = ObjectDetectorOptions.Builder()
+            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+            .setExecutor(cameraExecutor)
+            .enableMultipleObjects()
+            .enableClassification()
+            .build()
+        ObjectDetection.getClient(option)
+    }
 
     init{
         checkPermission()
         startCamera()
-        cameraExecutor = Executors.newSingleThreadExecutor()
-
     }
 
     private fun startCamera() {
@@ -39,6 +47,15 @@ class ConidaEye(nwContext : Activity) {
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
             imageCapture = ImageCapture.Builder().build()
+            val analysisUseCase = ImageAnalysis.Builder()
+                .build().apply {
+                    setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
+                        // CameraImageはCloseしないと次のフレームが取れない
+                                imageProxy.close()
+                            }
+                    }
+                })
+
 
 
             // 「インカメ」を設定
@@ -84,6 +101,7 @@ class ConidaEye(nwContext : Activity) {
     fun takePhoto() {
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
+
 
         // 写真の名前の設定（タイムスタンプ）とMediaStoreの設定
         val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
