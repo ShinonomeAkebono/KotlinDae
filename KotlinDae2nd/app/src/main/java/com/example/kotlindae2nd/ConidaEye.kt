@@ -60,7 +60,7 @@ class ConidaEye(nwContext : Activity) {
     private fun checkPermission(){
         if (ActivityCompat.checkSelfPermission(
                 nowContext,
-                Manifest.permission.BLUETOOTH_CONNECT
+                Manifest.permission.CAMERA,
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(

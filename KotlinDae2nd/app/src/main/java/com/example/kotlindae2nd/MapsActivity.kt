@@ -93,7 +93,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
     private fun checkPermission(){//パーミッションの関数。基本コピペ
         if (ActivityCompat.checkSelfPermission(
                 this,
-                Manifest.permission.BLUETOOTH_CONNECT
+                Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(

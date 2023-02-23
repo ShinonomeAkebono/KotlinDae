@@ -1,5 +1,6 @@
 package com.example.kotlindae2nd
 
+import android.app.Activity
 import android.content.Context
 import android.location.Location
 import kotlin.math.abs
@@ -11,6 +12,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var shell: KShell
     private var shijimi: KShijimi
     private var mContext = context
+    private var eye:ConidaEye
     private var key = blue
     //誘導関連の変数
     private var right = 0
@@ -44,6 +46,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         println("しじみも乗るんだえ")
         shijimi = KShijimi()
         driveLog("運転開始だえ")
+        eye = ConidaEye(mContext as Activity)
         shell.setSensorLogger(shijimi)
         shell.ignition(key)
         //自分の状態を監視するスレッドを開始
@@ -101,6 +104,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             if (distance!! < 5) {
                 driveLog("目的地付近なんだえ")
                 shell.axel(0,0)
+                eye.takePhoto()
                 goalListener?.onGoalDetected()
                 stop()
             }
@@ -159,6 +163,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         driveLog("車を降りるんだえ")
         driveLog("しじみも降りるんだえ")
         shijimi.quit()
+        eye.finish()
     }
     private fun induction(){
         do{
@@ -276,6 +281,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         }
         if(lastState!=state){//状態が変化していた時
             statelistener?.onStateChanged(state)
+            eye.takePhoto()
         }
 
     }
