@@ -150,6 +150,9 @@ class KShell(context: Context) :SensorEventListener{
             listenerShijimi!!.sensorRecord(logStr)
         }
     }
+    fun sendGoSign(){
+        blue?.sendData("52120")
+    }
 
     private fun checkPermission(){//パーミッションの関数。基本コピペ
         if (ActivityCompat.checkSelfPermission(

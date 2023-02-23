@@ -62,11 +62,14 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 }
             }
             try {
-                Thread.sleep(15000)
+                Thread.sleep(5000)
+                shell.sendGoSign()
+                Thread.sleep(35000)
             } catch (_: Exception) {
                 isDriveOk = false
             }
             if(isDriveOk){
+
                 drive(gLat,gLong)
             }
         }
