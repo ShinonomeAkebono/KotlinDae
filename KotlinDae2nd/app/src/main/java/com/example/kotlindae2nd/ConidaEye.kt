@@ -45,18 +45,17 @@ class ConidaEye(nwContext : Activity) {
         cameraProviderFuture.addListener({
             // ライフサイクルにバインドするために利用する
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
             imageCapture = ImageCapture.Builder().build()
             val analysisUseCase = ImageAnalysis.Builder()
                 .build().apply {
                     setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
                         // CameraImageはCloseしないと次のフレームが取れない
-                                imageProxy.close()
-                            }
+                        println("=========================")
+                        println("${imageProxy.height},${imageProxy.width}")
+                        println("=========================")
+                        imageProxy.close()
                     }
-                },cameraExecutor)
-
-
+                }
             // 「インカメ」を設定
             val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
@@ -65,13 +64,15 @@ class ConidaEye(nwContext : Activity) {
                 cameraProvider.unbindAll()
 
                 // カメラをライフサイクルにリバインド
-                cameraProvider.bindToLifecycle(nowContext as LifecycleOwner,cameraSelector,imageCapture)
+                cameraProvider.bindToLifecycle(nowContext as LifecycleOwner,cameraSelector,imageCapture,analysisUseCase)
 
             } catch(exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
         }, ContextCompat.getMainExecutor(nowContext))
+    }
+
 
     private fun checkPermission(){
         if (ActivityCompat.checkSelfPermission(
