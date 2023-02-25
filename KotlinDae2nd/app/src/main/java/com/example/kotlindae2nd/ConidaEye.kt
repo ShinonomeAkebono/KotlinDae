@@ -54,7 +54,7 @@ class ConidaEye(nwContext : Activity) {
                                 imageProxy.close()
                             }
                     }
-                })
+                },cameraExecutor)
 
 
             // 「インカメ」を設定
@@ -71,7 +71,7 @@ class ConidaEye(nwContext : Activity) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
 
-        }, ContextCompat.getMainExecutor(nowContext))}
+        }, ContextCompat.getMainExecutor(nowContext))
 
     private fun checkPermission(){
         if (ActivityCompat.checkSelfPermission(
