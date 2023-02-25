@@ -57,7 +57,6 @@ class ConidaEye(nwContext : Activity) {
                 })
 
 
-
             // 「インカメ」を設定
             val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
