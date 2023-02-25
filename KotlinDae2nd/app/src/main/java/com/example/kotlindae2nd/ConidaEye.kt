@@ -12,6 +12,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
@@ -20,7 +21,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class ConidaEye(nwContext : Activity) {
+@ExperimentalGetImage class ConidaEye(nwContext : Activity) {
     private var nowContext = nwContext
     private var imageCapture: ImageCapture? = null
     private var cameraExecutor: ExecutorService =Executors.newSingleThreadExecutor()
@@ -50,10 +51,20 @@ class ConidaEye(nwContext : Activity) {
                 .build().apply {
                     setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
                         // CameraImageはCloseしないと次のフレームが取れない
-                        println("=========================")
-                        println("${imageProxy.height},${imageProxy.width}")
-                        println("=========================")
-                        imageProxy.close()
+                        objectDetector.process(InputImage.fromMediaImage(imageProxy.image!!,imageProxy.imageInfo.rotationDegrees))
+                            .addOnSuccessListener {
+                                for(detectedObject in it){
+                                    val box = detectedObject.boundingBox
+                                    for(label in detectedObject.labels){
+                                        println(label.text)
+                                    }
+                                    println("=============================")
+                                    println("${box.right},${box.left},${box.top},${box.bottom}")
+                                    println("=============================")
+                                }
+                            }.addOnCompleteListener{
+                                imageProxy.close()
+                            }
                     }
                 }
             // 「インカメ」を設定

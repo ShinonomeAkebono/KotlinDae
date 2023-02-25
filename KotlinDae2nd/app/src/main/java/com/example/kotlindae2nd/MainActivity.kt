@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity(){
             }
         }
     }
+
     private fun initSelectModeSpinner() {
         val selectModeSpinner = binding.spnSelect
         val mConnectDeviceAdapter = ArrayAdapter<String>(this, R.layout.simple_spinner_item)
