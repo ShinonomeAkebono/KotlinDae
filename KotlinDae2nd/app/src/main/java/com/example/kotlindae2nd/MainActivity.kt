@@ -6,17 +6,20 @@ import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import com.example.kotlindae2nd.databinding.ActivityMainBinding
 
 
-class MainActivity : AppCompatActivity(){
+@ExperimentalGetImage class MainActivity : AppCompatActivity(){
     private lateinit var binding: ActivityMainBinding
+    private lateinit var eye: ConidaEye
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
         initSelectModeSpinner()
+        eye = ConidaEye(this)
         binding.btnStartOnMain.setOnClickListener {
             when(binding.spnSelect.selectedItem.toString()){
                 MODE_INDUCTION->{
@@ -56,6 +59,11 @@ class MainActivity : AppCompatActivity(){
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        eye.finish()
     }
 
     private fun initSelectModeSpinner() {

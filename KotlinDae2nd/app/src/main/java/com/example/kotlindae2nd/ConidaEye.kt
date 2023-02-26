@@ -12,9 +12,11 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
+import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,13 +28,23 @@ import java.util.concurrent.Executors
     private var imageCapture: ImageCapture? = null
     private var cameraExecutor: ExecutorService =Executors.newSingleThreadExecutor()
     private val objectDetector: ObjectDetector by lazy {
+        val localModel = LocalModel.Builder()
+            .setAssetFilePath("mnasnet_1.3_224_1_metadata_1.tflite")
+            .build()
+        val customOptions = CustomObjectDetectorOptions.Builder(localModel)
+            .setDetectorMode(CustomObjectDetectorOptions.SINGLE_IMAGE_MODE)
+            .enableClassification()
+            .setClassificationConfidenceThreshold(0.8f)
+            .setMaxPerObjectLabelCount(1)
+            .build()
+
         val option = ObjectDetectorOptions.Builder()
             .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
             .setExecutor(cameraExecutor)
             .enableMultipleObjects()
             .enableClassification()
             .build()
-        ObjectDetection.getClient(option)
+        ObjectDetection.getClient(customOptions)
     }
 
     init{
@@ -47,6 +59,7 @@ import java.util.concurrent.Executors
             // ライフサイクルにバインドするために利用する
             val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
             imageCapture = ImageCapture.Builder().build()
+
             val analysisUseCase = ImageAnalysis.Builder()
                 .build().apply {
                     setAnalyzer(cameraExecutor) { imageProxy: ImageProxy ->
