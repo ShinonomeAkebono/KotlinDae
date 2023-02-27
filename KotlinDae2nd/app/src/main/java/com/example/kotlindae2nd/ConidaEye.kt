@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
@@ -29,20 +30,13 @@ import java.util.concurrent.Executors
     private var cameraExecutor: ExecutorService =Executors.newSingleThreadExecutor()
     private val objectDetector: ObjectDetector by lazy {
         val localModel = LocalModel.Builder()
-            .setAssetFilePath("mnasnet_1.3_224_1_metadata_1.tflite")
+            .setAssetFilePath("coneAndOther.tflite")
             .build()
         val customOptions = CustomObjectDetectorOptions.Builder(localModel)
             .setDetectorMode(CustomObjectDetectorOptions.SINGLE_IMAGE_MODE)
             .enableClassification()
-            .setClassificationConfidenceThreshold(0.8f)
+            .setClassificationConfidenceThreshold(0.6f)
             .setMaxPerObjectLabelCount(1)
-            .build()
-
-        val option = ObjectDetectorOptions.Builder()
-            .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-            .setExecutor(cameraExecutor)
-            .enableMultipleObjects()
-            .enableClassification()
             .build()
         ObjectDetection.getClient(customOptions)
     }
@@ -70,10 +64,24 @@ import java.util.concurrent.Executors
                                     val box = detectedObject.boundingBox
                                     for(label in detectedObject.labels){
                                         println(label.text)
+                                        if(label.text=="Cone"){
+                                            println("=============================")
+                                            val centY = imageProxy.height/2
+                                            val centX = imageProxy.width/2
+                                            val diffY = (box.top+box.bottom)/2 - centY
+                                            val diffX = (box.right+box.left)/2 -centX
+                                            println("**********")
+                                            println(diffY)
+                                            println(diffX)
+                                            println("**********")
+                                            if(diffY>0){
+                                                println("right")
+                                            }else{
+                                                println("left")
+                                            }
+                                            println("=============================")
+                                        }
                                     }
-                                    println("=============================")
-                                    println("${box.right},${box.left},${box.top},${box.bottom}")
-                                    println("=============================")
                                 }
                             }.addOnCompleteListener{
                                 imageProxy.close()
