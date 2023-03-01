@@ -3,12 +3,14 @@ package com.example.kotlindae2nd
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.kotlindae2nd.databinding.ActivityServerConidaeFaceBinding
+import java.lang.Exception
 
-class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateListener,InductionKonidae.GoalListener {
+@ExperimentalGetImage class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateListener,InductionKonidae.GoalListener {
 
     private lateinit var binding:ActivityServerConidaeFaceBinding
     private lateinit var key:BluetoothKommunication
@@ -28,9 +30,9 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
         faceThread = Thread{
             while (true){
                 try {
-                    Thread.sleep(20000)
+                    Thread.sleep(15000)//15秒に一回の同期
                     serverDrive(REGISTER_AND_REQUEST_GOAL)
-                }catch (e:java.lang.Exception){
+                }catch (e: Exception){
                     break
                 }
             }

@@ -3,9 +3,10 @@ package com.example.kotlindae2nd
 import android.app.Activity
 import android.content.Context
 import android.location.Location
+import androidx.camera.core.ExperimentalGetImage
 import kotlin.math.abs
 
-class InductionKonidae(blue: BluetoothKommunication,context: Context) {
+@ExperimentalGetImage class InductionKonidae(blue: BluetoothKommunication, context: Context) {
     //スレッドとインスタンス化したいクラスの宣言
     private var driveThread: Thread? = null
     private var landDetectThread:Thread?=null
