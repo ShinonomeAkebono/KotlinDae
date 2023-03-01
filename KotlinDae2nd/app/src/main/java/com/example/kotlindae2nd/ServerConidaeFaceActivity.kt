@@ -28,7 +28,7 @@ class ServerConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateList
         faceThread = Thread{
             while (true){
                 try {
-                    Thread.sleep(20000)
+                    Thread.sleep(15000)
                     serverDrive(REGISTER_AND_REQUEST_GOAL)
                 }catch (e:java.lang.Exception){
                     break
