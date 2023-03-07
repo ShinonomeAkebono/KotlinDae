@@ -26,6 +26,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     private var distance:Float? = null
     private var magNorth = 0.0
     private var minPressure = Float.MAX_VALUE
+    private val gDist = 5
     //状態記録用の変数
     var state = 0
     var statelistener:StateListener? = null
@@ -67,7 +68,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             try {
                 Thread.sleep(5000)
                 shell.sendGoSign()
-                Thread.sleep(35000)
+                Thread.sleep(40000)
             } catch (_: Exception) {
                 isDriveOk = false
             }
@@ -91,7 +92,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                 Thread.sleep(1000)
             }
             calculateToGoal()
-            while (distance!! > 5) {
+            while (distance!! > gDist) {
                 //目標方位を向く
                 calculateToGoal()
                 induction()
@@ -101,7 +102,8 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
                     break
                 }
             }
-            if (distance!! < 5) {
+            if (distance!! < gDist) {
+                calculateToGoal()
                 driveLog("目的地付近なんだえ")
                 shell.axel(0,0)
                 eye.takePhoto()
@@ -120,7 +122,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         driveThread = null
         goalLat = gLat
         goalLon = gLong
-        driveLog("運転するんだえ")
+        driveLog("$gLat,$gLong に向けて運転するんだえ")
         //スレッドを定義
         driveThread = Thread {
             while ((shell.nowLat==null)||(shell.nowLon==null)){
@@ -131,17 +133,18 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             while (true) {
                 //目標方位を向く
                 calculateToGoal()
-                induction()
                 if (breaker) {
                     driveLog("方向転換中に終わるんだえ")
                     stop()
                     break
                 }
-                if (distance!! < 5) {
+                if (distance!! < gDist) {
                     driveLog("目的地付近なんだえ")
                     shell.axel(0,0)
+                    eye.takePhoto()
                     goalListener?.onGoalDetected()
                 }
+                induction()
             }
         }
         //スレッドを開始
@@ -167,8 +170,8 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
     }
     private fun induction(){
         do{
-            //driveLog("出力するんだえ")
-            //driveLog("$left,$right")
+            driveLog("出力するんだえ")
+            driveLog("$left,$right")
             shell.axel(left,right)
             try {
                 Thread.sleep(20)
@@ -298,7 +301,7 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
             false
         }else{
             val fallDistance=(shell.pressureReading!!- minPressure) *8.00372
-            fallDistance>10
+            fallDistance>15
         }
     }
     companion object{

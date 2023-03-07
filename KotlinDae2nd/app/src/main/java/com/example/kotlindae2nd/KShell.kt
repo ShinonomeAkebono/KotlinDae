@@ -146,7 +146,7 @@ class KShell(context: Context) :SensorEventListener{
 
     private fun takeLog(){
         if(listenerShijimi!=null){
-            val logStr = "$orientationAngles"+"$nowLat"+"$nowLon"
+            val logStr = "$nowLat,$nowLon"
             listenerShijimi!!.sensorRecord(logStr)
         }
     }
