@@ -209,14 +209,15 @@ class InductionKonidae(blue: BluetoothKommunication,context: Context) {
         val delta = goalAzimuth?.minus(nowAzimuth)
         var phi = 0.0
         if((-360<= delta!!)&&(delta<=-180)){
-            phi = 360+delta
+            phi = delta+360
         }else if ((0<delta)&&(delta<180)){
             phi = delta
         }else if((-180<delta)&&(delta<0)) {
             phi = delta
         }else if((180<=delta)&&(delta<=360)){
-            phi = 180 - delta
+            phi = delta-360
         }
+        println(phi)
         phi /= 2
         val preRight = right
         val preLeft = left

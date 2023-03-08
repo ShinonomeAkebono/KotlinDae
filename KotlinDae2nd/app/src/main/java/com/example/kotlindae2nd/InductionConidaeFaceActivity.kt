@@ -59,13 +59,13 @@ class InductionConidaeFaceActivity : AppCompatActivity(),InductionKonidae.StateL
     }
 
     override fun onStateChanged(state: Int){
-        if(state.and(InductionKonidae.STATE_PRESSUREOK)==0){
+        if(state.and(InductionKonidae.STATE_PRESSUREOK)==0){//高度が十分下がっていない時
             fightFace()
         }
-        else if(state.and(InductionKonidae.STATE_REVERSE)!=0){
+        else if(state.and(InductionKonidae.STATE_REVERSE)!=0){//反転しているとき
             nothingFace()
         }
-        else if(state.and(InductionKonidae.STATE_CONNECTION_ERR)!=0){
+        else if(state.and(InductionKonidae.STATE_CONNECTION_ERR)!=0){//Bluetoothエラーのとき
             troubleFace()
         }
         else{
